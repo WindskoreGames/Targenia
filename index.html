@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Targenia - Butik</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #1f1f2e;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #2c2c44;
+      padding: 20px;
+      text-align: center;
+      font-size: 2em;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+      gap: 20px;
+    }
+    .product {
+      background: #2c2c44;
+      border-radius: 12px;
+      width: 220px;
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .product:hover {
+      transform: scale(1.05);
+    }
+    .product img {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+    .product button {
+      background: #ff6b6b;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      margin-top: 5px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .product button:hover {
+      background: #ff5252;
+    }
+    .cart {
+      position: fixed;
+      right: 20px;
+      top: 80px;
+      width: 320px;
+      max-height: 80vh;
+      overflow-y: auto;
+      background: #2c2c44;
+      border-radius: 12px;
+      padding: 15px;
+    }
+    .cart h2 {
+      margin-top: 0;
+    }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      align-items: center;
+    }
+    .cart-item span {
+      margin: 0 5px;
+    }
+    .cart-item button {
+      padding: 4px 8px;
+      margin: 0 2px;
+    }
+    .checkout {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checkout input, .checkout select, .checkout textarea {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      width: 100%;
+    }
+    .checkout button {
+      background: #1dd1a1;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>Targenia</header>
+
+<main id="products"></main>
+
+<div class="cart">
+  <h2>Kundvagn</h2>
+  <div id="cartItems"></div>
+  <div class="checkout">
+    <input type="text" id="firstName" placeholder="Förnamn">
+    <input type="text" id="lastName" placeholder="Efternamn">
+    <input type="text" id="minecraftName" placeholder="Minecraft-användarnamn">
+    <input type="text" id="address" placeholder="Adress">
+    <input type="text" id="publicAccount" placeholder="Public Account Number">
+    <input type="text" id="secretKey" placeholder="Secret Key">
+    <label>
+      Hemleverans (+10%)
+      <select id="homeDelivery">
+        <option value="nej">Nej</option>
+        <option value="ja">Ja</option>
+      </select>
+    </label>
+    <label>
+      Expressleverans (+20%)
+      <select id="expressDelivery">
+        <option value="nej">Nej</option>
+        <option value="ja">Ja</option>
+      </select>
+    </label>
+    <textarea id="notes" placeholder="Anteckningar (Frivilligt)"></textarea>
+    <button onclick="checkout()">Slutför betalning</button>
+  </div>
+</div>
+
+<script>
+  // Supabase init
+  const supabaseUrl = 'DIN_SUPABASE_URL';
+  const supabaseKey = 'DIN_SUPABASE_ANON_KEY';
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+  const products = [
+    {name: "Bok", price: 5, unit: "D/Bok", img: "URL_HÄR"},
+    {name: "Koppel", price: 3, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Namnskylt", price: 1, unit: "D/10Stycken", img: "URL_HÄR"},
+    {name: "Skölpaddsägg", price: 6, unit: "D/Ägg", img: "URL_HÄR"},
+    {name: "Respawn Anchor", price: 25, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Elytra", price: 0, unit: "Ej Tillgänglig Att Köpa", img: "URL_HÄR"},
+    {name: "Adrians Fantastiska Fireworks", price: 8, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Nautilus skal", price: 9, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Shulkerbox", price: 12, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Spyglass", price: 3, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Totem of Undying", price: 2, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Ringklocka", price: 5, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Dragons Breath", price: 8, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Bone", price: 1, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Kedja", price: 2, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Tråd", price: 1, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Spindelnät", price: 1, unit: "D/8Stycken", img: "URL_HÄR"},
+    {name: "Magnetit", price: 16, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Fiskespö", price: 5, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Pilbåge", price: 5, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Beacon", price: 12, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Ender Kista", price: 6, unit: "D/Styck", img: "URL_HÄR"},
+    {name: "Guldtacka", price: 2, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Guld Block", price: 14, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Järn", price: 1, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Järn Block", price: 5, unit: "D/Stack", img: "URL_HÄR"},
+    {name: "Smarald Block", price: 4, unit: "D/16St", img: "URL_HÄR"},
+    {name: "Netherite", price: 12, unit: "D/St", img: "URL_HÄR"}
+  ];
+
+  const cart = {};
+
+  const productsContainer = document.getElementById('products');
+  const cartItemsContainer = document.getElementById('cartItems');
+
+  function renderProducts() {
+    products.forEach((p, index) => {
+      const div = document.createElement('div');
+      div.className = 'product';
+      div.innerHTML = `
+        <img src="${p.img}" alt="${p.name}">
+        <h3>${p.name}</h3>
+        <p>${p.price}${p.unit}</p>
+        ${p.unit.includes("Ej Tillgänglig") ? '<p>Ej tillgänglig</p>' : `<button onclick="addToCart(${index})">Lägg till i kundvagn</button>`}
+      `;
+      productsContainer.appendChild(div);
+    });
+  }
+
+  function addToCart(index) {
+    const p = products[index];
+    if (!cart[p.name]) cart[p.name] = 1;
+    else if (cart[p.name] < 15) cart[p.name]++;
+    updateCart();
+  }
+
+  function updateCart() {
+    cartItemsContainer.innerHTML = '';
+    Object.keys(cart).forEach(name => {
+      const product = products.find(p => p.name === name);
+      const quantity = cart[name];
+      const div = document.createElement('div');
+      div.className = 'cart-item';
+      div.innerHTML = `
+        <span>${name} (${product.price}${product.unit})</span>
+        <div>
+          <button onclick="changeQuantity('${name}', -1)">-</button>
+          <span>${quantity}</span>
+          <button onclick="changeQuantity('${name}', 1)">+</button>
+        </div>
+      `;
+      cartItemsContainer.appendChild(div);
+    });
+  }
+
+  function changeQuantity(name, delta) {
+    if (!cart[name]) return;
+    cart[name] += delta;
+    if (cart[name] < 1) cart[name] = 1;
+    if (cart[name] > 15) cart[name] = 15;
+    updateCart();
+  }
+
+  async function checkout() {
+    const order = {
+      items: cart,
+      first_name: document.getElementById('firstName').value,
+      last_name: document.getElementById('lastName').value,
+      minecraft_name: document.getElementById('minecraftName').value,
+      address: document.getElementById('address').value,
+      public_account: document.getElementById('publicAccount').value,
+      secret_key: document.getElementById('secretKey').value,
+      home_delivery: document.getElementById('homeDelivery').value,
+      express_delivery: document.getElementById('expressDelivery').value,
+      notes: document.getElementById('notes').value,
+      order_number: 'ORD' + Math.floor(Math.random()*1000000)
+    };
+    
+    const { data, error } = await supabase.from('orders').insert([order]);
+    if (error) {
+      alert('Något gick fel: ' + error.message);
+    } else {
+      alert('Order mottagen! Spara ditt ordernummer: ' + order.order_number);
+      // Rensa kundvagn
+      for (let key in cart) delete cart[key];
+      updateCart();
+    }
+  }
+
+  renderProducts();
+</script>
+
+</body>
+</html>
