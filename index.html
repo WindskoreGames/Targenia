@@ -4,14 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Targenia - Butik</title>
+
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       background: #1f1f2e;
       color: #fff;
       margin: 0;
-      padding: 0;
     }
     header {
       background: #2c2c44;
@@ -19,14 +21,13 @@
       text-align: center;
       font-size: 2em;
       font-weight: bold;
-      letter-spacing: 2px;
     }
     main {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      padding: 20px;
       gap: 20px;
+      padding: 20px;
     }
     .product {
       background: #2c2c44;
@@ -34,84 +35,43 @@
       width: 220px;
       padding: 15px;
       text-align: center;
-      transition: transform 0.2s;
-    }
-    .product:hover {
-      transform: scale(1.05);
     }
     .product img {
       width: 150px;
       height: 150px;
       object-fit: contain;
-      margin-bottom: 10px;
     }
     .product button {
       background: #ff6b6b;
       border: none;
       color: #fff;
-      padding: 8px 12px;
-      margin-top: 5px;
-      cursor: pointer;
+      padding: 8px;
       border-radius: 8px;
-      transition: background 0.2s;
+      cursor: pointer;
     }
-    .product button:hover {
-      background: #ff5252;
+    .product button:disabled {
+      background: #555;
+      cursor: not-allowed;
     }
     .cart {
       position: fixed;
       right: 20px;
       top: 80px;
       width: 320px;
+      background: #2c2c44;
+      padding: 15px;
+      border-radius: 12px;
       max-height: 80vh;
       overflow-y: auto;
-      background: #2c2c44;
-      border-radius: 12px;
-      padding: 15px;
-    }
-    .cart h2 {
-      margin-top: 0;
     }
     .cart-item {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
-      align-items: center;
-    }
-    .cart-item span {
-      margin: 0 5px;
-    }
-    .cart-item button {
-      padding: 4px 8px;
-      margin: 0 2px;
-    }
-    .checkout {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .checkout input, .checkout select, .checkout textarea {
-      padding: 8px;
-      border-radius: 6px;
-      border: none;
-      width: 100%;
-    }
-    .checkout button {
-      background: #1dd1a1;
-      margin-top: 10px;
-      cursor: pointer;
-      border: none;
-      color: #fff;
-      padding: 10px;
-      border-radius: 8px;
-      transition: background 0.2s;
-    }
-    .checkout button:hover {
-      background: #10ac84;
+      margin: 8px 0;
     }
   </style>
 </head>
+
 <body>
 
 <header>Targenia</header>
@@ -121,153 +81,63 @@
 <div class="cart">
   <h2>Kundvagn</h2>
   <div id="cartItems"></div>
-  <div class="checkout">
-    <input type="text" id="firstName" placeholder="Förnamn">
-    <input type="text" id="lastName" placeholder="Efternamn">
-    <input type="text" id="minecraftName" placeholder="Minecraft-användarnamn">
-    <input type="text" id="address" placeholder="Adress">
-    <input type="text" id="publicAccount" placeholder="Public Account Number">
-    <input type="text" id="secretKey" placeholder="Secret Key">
-    <label>
-      Hemleverans (+10%)
-      <select id="homeDelivery">
-        <option value="nej">Nej</option>
-        <option value="ja">Ja</option>
-      </select>
-    </label>
-    <label>
-      Expressleverans (+20%)
-      <select id="expressDelivery">
-        <option value="nej">Nej</option>
-        <option value="ja">Ja</option>
-      </select>
-    </label>
-    <textarea id="notes" placeholder="Anteckningar (Frivilligt)"></textarea>
-    <button onclick="checkout()">Slutför betalning</button>
-  </div>
 </div>
 
 <script>
-  // Supabase init
-  const supabaseUrl = 'https://ahfrpztyepvdiyakgkwt.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoZnJwenR5ZXB2ZGl5YWtna3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0MDQ4MDEsImV4cCI6MjA4Njk4MDgwMX0.pz3zoPI0ayL19Mgx8IxUqeR3M1elc6Da0HVwzQluaBE';
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  /* =======================
+     SUPABASE (FIXAD)
+     ======================= */
+  const SUPABASE_URL = 'https://ahfrpztyepvdiyakgkwt.supabase.co';
+  const SUPABASE_KEY = 'DIN_ANON_KEY_HÄR';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const products = [
-    { name: "Bok", price: 5, unit: "D/Bok", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/87/Book_JE2.png" },
-    { name: "Koppel", price: 3, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Lead_JE2.png" },
-    { name: "Namnskylt", price: 1, unit: "D/10Stycken", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1f/Name_Tag_JE2.png" },
-    { name: "Sköldpaddsägg", price: 6, unit: "D/Ägg", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Turtle_Egg_JE2.png" },
-    { name: "Respawn Anchor", price: 25, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/0b/Respawn_Anchor_JE2.png" },
-    { name: "Elytra", price: 0, unit: "Ej Tillgänglig Att Köpa", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/c2/Elytra_JE2.png" },
-    { name: "Adrians Fantastiska Fireworks", price: 8, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/19/Firework_Rocket_JE2.png" },
-    { name: "Nautilus skal", price: 9, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Nautilus_Shell_JE2.png" },
-    { name: "Shulkerbox", price: 12, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/55/Shulker_Box_JE2.png" },
-    { name: "Spyglass", price: 3, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/64/Spyglass_JE2.png" },
-    { name: "Totem of Undying", price: 2, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f6/Totem_of_Undying_JE2.png" },
-    { name: "Ringklocka", price: 5, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5e/Bell_JE2.png" },
-    { name: "Dragons Breath", price: 8, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cd/Dragon%27s_Breath_JE2.png" },
-    { name: "Ben", price: 1, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/03/Bone_JE2.png" },
-    { name: "Kedja", price: 2, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/66/Chain_JE2.png" },
-    { name: "Tråd", price: 1, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/84/String_JE2.png" },
-    { name: "Spindelnät", price: 1, unit: "D/8Stycken", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9b/Cobweb_JE2.png" },
-    { name: "Magnetit", price: 16, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e2/Block_of_Magnetite_JE2.png" },
-    { name: "Fiskespö", price: 5, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f0/Fishing_Rod_JE2.png" },
-    { name: "Pilbåge", price: 5, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/7/7e/Bow_JE2.png" },
-    { name: "Beacon", price: 12, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/51/Beacon_JE2.png" },
-    { name: "Ender Kista", price: 6, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8c/Ender_Chest_JE2.png" },
-    { name: "Guldtacka", price: 2, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/3e/Gold_Ingot_JE2.png" },
-    { name: "Guld Block", price: 14, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Block_of_Gold_JE2.png" },
-    { name: "Järn", price: 1, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5b/Iron_Ingot_JE2.png" },
-    { name: "Järn Block", price: 5, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/fd/Block_of_Iron_JE2.png" },
-    { name: "Smarald Block", price: 4, unit: "D/16St", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/00/Block_of_Emerald_JE2.png" },
-    { name: "Netherite", price: 12, unit: "D/St", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/09/Netherite_Ingot_JE2.png" }
-  ];
+  /* =======================
+     PRODUKTER
+     ======================= */
+const products = [ { name: "Bok", price: 5, unit: "D/Bok", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/87/Book_JE2.png" }, { name: "Koppel", price: 3, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Lead_JE2.png" }, { name: "Namnskylt", price: 1, unit: "D/10Stycken", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1f/Name_Tag_JE2.png" }, { name: "Sköldpaddsägg", price: 6, unit: "D/Ägg", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Turtle_Egg_JE2.png" }, { name: "Respawn Anchor", price: 25, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/0b/Respawn_Anchor_JE2.png" }, { name: "Elytra", price: 0, unit: "Ej Tillgänglig Att Köpa", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/c2/Elytra_JE2.png" }, { name: "Adrians Fantastiska Fireworks", price: 8, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/19/Firework_Rocket_JE2.png" }, { name: "Nautilus skal", price: 9, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Nautilus_Shell_JE2.png" }, { name: "Shulkerbox", price: 12, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/55/Shulker_Box_JE2.png" }, { name: "Spyglass", price: 3, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/64/Spyglass_JE2.png" }, { name: "Totem of Undying", price: 2, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f6/Totem_of_Undying_JE2.png" }, { name: "Ringklocka", price: 5, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5e/Bell_JE2.png" }, { name: "Dragons Breath", price: 8, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cd/Dragon%27s_Breath_JE2.png" }, { name: "Ben", price: 1, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/03/Bone_JE2.png" }, { name: "Kedja", price: 2, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/66/Chain_JE2.png" }, { name: "Tråd", price: 1, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/84/String_JE2.png" }, { name: "Spindelnät", price: 1, unit: "D/8Stycken", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9b/Cobweb_JE2.png" }, { name: "Magnetit", price: 16, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e2/Block_of_Magnetite_JE2.png" }, { name: "Fiskespö", price: 5, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f0/Fishing_Rod_JE2.png" }, { name: "Pilbåge", price: 5, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/7/7e/Bow_JE2.png" }, { name: "Beacon", price: 12, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/51/Beacon_JE2.png" }, { name: "Ender Kista", price: 6, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8c/Ender_Chest_JE2.png" }, { name: "Guldtacka", price: 2, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/3e/Gold_Ingot_JE2.png" }, { name: "Guld Block", price: 14, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Block_of_Gold_JE2.png" }, { name: "Järn", price: 1, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5b/Iron_Ingot_JE2.png" }, { name: "Järn Block", price: 5, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/fd/Block_of_Iron_JE2.png" }, { name: "Smarald Block", price: 4, unit: "D/16St", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/00/Block_of_Emerald_JE2.png" }, { name: "Netherite", price: 12, unit: "D/St", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/09/Netherite_Ingot_JE2.png" } ];
 
   const cart = {};
-  const productsContainer = document.getElementById('products');
-  const cartItemsContainer = document.getElementById('cartItems');
+  const productsDiv = document.getElementById("products");
+  const cartDiv = document.getElementById("cartItems");
 
   function renderProducts() {
-    productsContainer.innerHTML = '';
-    products.forEach((p, index) => {
-      const div = document.createElement('div');
-      div.className = 'product';
-      div.innerHTML = `
-        <img src="${p.img}" alt="${p.name}">
-        <h3>${p.name}</h3>
-        <p>${p.price}${p.unit}</p>
-        ${p.unit.includes("Ej Tillgänglig") ? '<p>Ej tillgänglig</p>' : `<button onclick="addToCart(${index})">Lägg till i kundvagn</button>`}
+    productsDiv.innerHTML = "";
+    products.forEach((p, i) => {
+      const disabled = p.unit.includes("Ej");
+      productsDiv.innerHTML += `
+        <div class="product">
+          <img src="${p.img}">
+          <h3>${p.name}</h3>
+          <p>${p.price} ${p.unit}</p>
+          <button ${disabled ? "disabled" : ""} onclick="addToCart(${i})">
+            ${disabled ? "Ej tillgänglig" : "Lägg i kundvagn"}
+          </button>
+        </div>
       `;
-      productsContainer.appendChild(div);
     });
   }
 
-  function addToCart(index) {
-    const p = products[index];
-    if (!cart[p.name]) cart[p.name] = 1;
-    else if (cart[p.name] < 15) cart[p.name]++;
+  function addToCart(i) {
+    const name = products[i].name;
+    cart[name] = (cart[name] || 0) + 1;
     updateCart();
   }
 
   function updateCart() {
-    cartItemsContainer.innerHTML = '';
-    Object.keys(cart).forEach(name => {
-      const product = products.find(p => p.name === name);
-      const quantity = cart[name];
-      const div = document.createElement('div');
-      div.className = 'cart-item';
-      div.innerHTML = `
-        <span>${name} (${product.price}${product.unit})</span>
-        <div>
-          <button onclick="changeQuantity('${name}', -1)">-</button>
-          <span>${quantity}</span>
-          <button onclick="changeQuantity('${name}', 1)">+</button>
+    cartDiv.innerHTML = "";
+    Object.keys(cart).forEach(k => {
+      cartDiv.innerHTML += `
+        <div class="cart-item">
+          <span>${k}</span>
+          <span>${cart[k]} st</span>
         </div>
       `;
-      cartItemsContainer.appendChild(div);
     });
   }
 
-  function changeQuantity(name, delta) {
-    if (!cart[name]) return;
-    cart[name] += delta;
-    if (cart[name] < 1) cart[name] = 1;
-    if (cart[name] > 15) cart[name] = 15;
-    updateCart();
-  }
-
-  async function checkout() {
-    const order = {
-      items: cart,
-      first_name: document.getElementById('firstName').value,
-      last_name: document.getElementById('lastName').value,
-      minecraft_name: document.getElementById('minecraftName').value,
-      address: document.getElementById('address').value,
-      public_account: document.getElementById('publicAccount').value,
-      secret_key: document.getElementById('secretKey').value,
-      home_delivery: document.getElementById('homeDelivery').value,
-      express_delivery: document.getElementById('expressDelivery').value,
-      notes: document.getElementById('notes').value,
-      order_number: 'ORD' + Math.floor(Math.random()*1000000)
-    };
-    
-    const { data, error } = await supabase.from('orders').insert([order]);
-    if (error) {
-      alert('Något gick fel: ' + error.message);
-    } else {
-      alert('Order mottagen! Spara ditt ordernummer: ' + order.order_number);
-      // Rensa kundvagn
-      for (let key in cart) delete cart[key];
-      updateCart();
-    }
-  }
-
-  // Kör renderProducts när DOM är redo
-  document.addEventListener('DOMContentLoaded', () => {
-    renderProducts();
-  });
+  document.addEventListener("DOMContentLoaded", renderProducts);
 </script>
 
 </body>
 </html>
+
