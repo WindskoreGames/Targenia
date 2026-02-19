@@ -5,87 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Targenia - Butik</title>
 <style>
-body { font-family: Arial; background:#1f1f2e; color:#fff; margin:0; }
-header { background:#2c2c44; padding:20px; text-align:center; font-size:2em; }
-main { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:20px; }
-.product { background:#2c2c44; border-radius:12px; width:220px; padding:15px; text-align:center; }
-.product img { width:150px; height:150px; object-fit:contain; }
-.product button { background:#ff6b6b; border:none; color:#fff; padding:8px; border-radius:8px; margin-top:5px; cursor:pointer; }
-.product button:disabled { background:#555; cursor:not-allowed; }
-.cart-summary { position:fixed; right:20px; top:80px; width:200px; background:#2c2c44; padding:15px; border-radius:12px; }
-.cart-summary h3 { margin-top:0; }
-.cart-summary button { margin-top:10px; background:#1dd1a1; width:100%; padding:8px; border:none; border-radius:8px; cursor:pointer; }
+body{font-family:Arial;background:#1f1f2e;color:#fff;margin:0;padding:20px}
+header{background:#2c2c44;padding:20px;text-align:center;font-size:2em;font-weight:bold;border-radius:12px}
+main{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;margin-top:20px}
+.product{background:#2c2c44;border-radius:12px;width:200px;padding:15px;text-align:center}
+.product img{width:120px;height:120px;object-fit:contain}
+.product button{background:#ff6b6b;color:#fff;border:none;padding:8px;margin-top:8px;border-radius:6px;cursor:pointer}
+.product button:disabled{background:#555;cursor:not-allowed}
+.cart-button{position:fixed;right:20px;top:20px;background:#1dd1a1;color:#000;padding:10px 15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold}
 </style>
 </head>
 <body>
-
 <header>Targenia</header>
-
 <main id="products"></main>
-
-<div class="cart-summary">
-  <h3>Kundvagn</h3>
-  <p id="cartCount">0 produkter</p>
-  <button onclick="goToCheckout()">Till kassan</button>
-</div>
+<button class="cart-button" onclick="goToCheckout()">Till kassan</button>
 
 <script>
 // Produkter
 const products = [
-  {name:"Bok", price:5, unit:"D/Bok", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/87/Book_JE2.png"},
-  {name:"Koppel", price:3, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Lead_JE2.png"},
-  {name:"Namnskylt", price:1, unit:"D/10Stycken", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1f/Name_Tag_JE2.png"},
-  {name:"Sköldpaddsägg", price:6, unit:"D/Ägg", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Turtle_Egg_JE2.png"},
-  {name:"Respawn Anchor", price:25, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/0b/Respawn_Anchor_JE2.png"},
-  {name:"Elytra", price:0, unit:"Ej Tillgänglig Att Köpa", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/c2/Elytra_JE2.png"}
+  {name:"Bok",price:5,img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/87/Book_JE2.png"},
+  {name:"Koppel",price:3,img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Lead_JE2.png"},
+  {name:"Namnskylt",price:1,img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1f/Name_Tag_JE2.png"},
+  {name:"Sköldpaddsägg",price:6,img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Turtle_Egg_JE2.png"},
+  {name:"Respawn Anchor",price:25,img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/0b/Respawn_Anchor_JE2.png"},
+  {name:"Elytra",price:0,img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/c2/Elytra_JE2.png",disabled:true},
+  {name:"Adrians Fantastiska Fireworks",price:8,img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/19/Firework_Rocket_JE2.png"}
+  // Lägg till resten om du vill
 ];
 
-// Kundvagn
-let cart = JSON.parse(localStorage.getItem('cart') || '{}');
+let cart = JSON.parse(localStorage.getItem("cart")) || {};
 
 function renderProducts(){
-  const productsDiv = document.getElementById("products");
-  productsDiv.innerHTML = "";
+  const container = document.getElementById("products");
+  container.innerHTML = "";
   products.forEach((p,i)=>{
-    const disabled = p.unit.includes("Ej");
-    const div = document.createElement("div");
-    div.className="product";
-    div.innerHTML = `
-      <img src="${p.img}" alt="${p.name}">
-      <h3>${p.name}</h3>
-      <p>${p.price} ${p.unit}</p>
-      <button ${disabled?"disabled":""} onclick="addToCart(${i})">
-        ${disabled?"Ej tillgänglig":"Lägg i kundvagn"}
-      </button>
+    const btnDisabled = p.disabled ? "disabled" : "";
+    const btnText = p.disabled ? "Ej tillgänglig" : "Lägg i kundvagn";
+    container.innerHTML += `
+      <div class="product">
+        <img src="${p.img}">
+        <h3>${p.name}</h3>
+        <p>${p.price} D/st</p>
+        <button ${btnDisabled} onclick="addToCart(${i})">${btnText}</button>
+      </div>
     `;
-    productsDiv.appendChild(div);
   });
-  updateCartCount();
 }
 
 function addToCart(i){
   const name = products[i].name;
   cart[name] = (cart[name]||0)+1;
   if(cart[name]>15) cart[name]=15;
-  localStorage.setItem('cart', JSON.stringify(cart));
-  updateCartCount();
-}
-
-function updateCartCount(){
-  const count = Object.values(cart).reduce((a,b)=>a+b,0);
-  document.getElementById('cartCount').innerText = `${count} produkter`;
+  localStorage.setItem("cart",JSON.stringify(cart));
+  alert(`${name} tillagd i kundvagnen`);
 }
 
 function goToCheckout(){
-  if(Object.keys(cart).length===0){
-    alert("Kundvagnen är tom!");
-    return;
-  }
-  window.location.href = "kassa.html";
+  localStorage.setItem("cart",JSON.stringify(cart));
+  window.location.href="kassa.html";
 }
 
 renderProducts();
 </script>
-
 </body>
 </html>
