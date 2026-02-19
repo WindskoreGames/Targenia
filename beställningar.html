@@ -1,135 +1,68 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Targenia - Admin</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background: #1f1f2e;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #2c2c44;
-      padding: 20px;
-      text-align: center;
-      font-size: 2em;
-      font-weight: bold;
-      letter-spacing: 2px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-    }
-    th, td {
-      border: 1px solid #444;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background: #2c2c44;
-    }
-    td {
-      background: #33334d;
-    }
-    button {
-      padding: 5px 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .done { background: #1dd1a1; }
-    .done:hover { background: #10ac84; }
-    .refunded { background: #ff6b6b; }
-    .refunded:hover { background: #ff5252; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Targenia - Beställningar</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body { font-family: Arial; background:#1f1f2e; color:#fff; margin:0; padding:20px; }
+h1 { text-align:center; }
+.order { background:#2c2c44; padding:15px; margin:10px 0; border-radius:12px; }
+button { margin:5px 5px 0 0; padding:6px 10px; border:none; border-radius:6px; cursor:pointer; }
+.completed { background:#1dd1a1; color:#000; }
+.refunded { background:#ff6b6b; color:#fff; }
+</style>
 </head>
 <body>
 
-<header>Targenia - Admin / Beställningar</header>
-
-<table id="ordersTable">
-  <thead>
-    <tr>
-      <th>Ordernummer</th>
-      <th>Förnamn</th>
-      <th>Efternamn</th>
-      <th>Minecraft</th>
-      <th>Adress</th>
-      <th>Public Account</th>
-      <th>Secret Key</th>
-      <th>Hemleverans</th>
-      <th>Expressleverans</th>
-      <th>Anteckningar</th>
-      <th>Items</th>
-      <th>Avklarad</th>
-      <th>Återbetald</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<h1>Beställningar</h1>
+<div id="ordersContainer"></div>
 
 <script>
-  // Supabase init
-  const supabaseUrl = 'https://ahfrpztyepvdiyakgkwt.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoZnJwenR5ZXB2ZGl5YWtna3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0MDQ4MDEsImV4cCI6MjA4Njk4MDgwMX0.pz3zoPI0ayL19Mgx8IxUqeR3M1elc6Da0HVwzQluaBE';
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const SUPABASE_URL = 'https://ahfrpztyepvdiyakgkwt.supabase.co';
+const SUPABASE_KEY = 'DIN_SUPABASE_ANVÄNDARKEY_HÄR';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  async function fetchOrders() {
-    const { data, error } = await supabase.from('orders').select('*').order('id', { ascending: true });
-    if (error) {
-      alert('Fel vid hämtning av orders: ' + error.message);
-      return;
-    }
-    renderOrders(data);
-  }
+async function loadOrders(){
+  const { data: orders, error } = await supabase.from('orders').select('*');
+  if(error){ alert("Fel: "+error.message); return; }
+  const container = document.getElementById('ordersContainer');
+  container.innerHTML = "";
 
-  function renderOrders(orders) {
-    const tbody = document.querySelector('#ordersTable tbody');
-    tbody.innerHTML = '';
-    orders.forEach(order => {
-      const tr = document.createElement('tr');
+  orders.forEach(order=>{
+    const div = document.createElement('div');
+    div.className = 'order';
+    div.innerHTML = `
+      <strong>Ordernummer:</strong> ${order.order_number}<br>
+      <strong>Förnamn:</strong> ${order.first_name}<br>
+      <strong>Efternamn:</strong> ${order.last_name}<br>
+      <strong>Minecraft:</strong> ${order.minecraft_name}<br>
+      <strong>Adress:</strong> ${order.address}<br>
+      <strong>Hemleverans:</strong> ${order.home_delivery}<br>
+      <strong>Expressleverans:</strong> ${order.express_delivery}<br>
+      <strong>Anteckningar:</strong> ${order.notes || ""}<br>
+      <strong>Produkter:</strong> ${JSON.stringify(order.items)}<br>
+      <button onclick="markCompleted('${order.id}', this)" class="completed">Avklarad</button>
+      <button onclick="markRefunded('${order.id}', this)" class="refunded">Återbetald</button>
+    `;
+    container.appendChild(div);
+  });
+}
 
-      const items = Object.entries(order.items).map(([name, qty]) => `${name}: ${qty}`).join('<br>');
+async function markCompleted(id, btn){
+  const { error } = await supabase.from('orders').update({completed:true}).eq('id', id);
+  if(error){ alert("Fel: "+error.message); return; }
+  btn.disabled = true;
+}
 
-      tr.innerHTML = `
-        <td>${order.order_number}</td>
-        <td>${order.first_name}</td>
-        <td>${order.last_name}</td>
-        <td>${order.minecraft_name}</td>
-        <td>${order.address}</td>
-        <td>${order.public_account}</td>
-        <td>${order.secret_key}</td>
-        <td>${order.home_delivery}</td>
-        <td>${order.express_delivery}</td>
-        <td>${order.notes || ''}</td>
-        <td>${items}</td>
-        <td><button class="done" onclick="markDone(${order.id})">${order.done ? '✔' : 'Avklarad'}</button></td>
-        <td><button class="refunded" onclick="markRefunded(${order.id})">${order.refunded ? '✔' : 'Återbetald'}</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
+async function markRefunded(id, btn){
+  const { error } = await supabase.from('orders').update({refunded:true}).eq('id', id);
+  if(error){ alert("Fel: "+error.message); return; }
+  btn.disabled = true;
+}
 
-  async function markDone(id) {
-    const { data, error } = await supabase.from('orders').update({ done: true }).eq('id', id);
-    if (error) alert('Fel: ' + error.message);
-    else fetchOrders();
-  }
-
-  async function markRefunded(id) {
-    const { data, error } = await supabase.from('orders').update({ refunded: true }).eq('id', id);
-    if (error) alert('Fel: ' + error.message);
-    else fetchOrders();
-  }
-
-  fetchOrders();
+loadOrders();
 </script>
 
 </body>
