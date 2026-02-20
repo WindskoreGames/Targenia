@@ -111,7 +111,7 @@ function updateCart(){
 // Ändra antal
 function changeQty(name,delta){
   cart[name].qty=Math.max(1, cart[name].qty+delta);
-  if(cart[name].qty>15) cart[name].qty=15;
+  if(cart[name].qty>50) cart[name].qty=50;
   updateCart();
 }
 
