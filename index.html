@@ -1,267 +1,130 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Targenia</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-        }
-        .products {
-            flex: 3;
-            padding: 20px;
-        }
-        .product {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        .product img {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
-        }
-        .product-info {
-            flex: 1;
-        }
-        .cart {
-            flex: 1;
-            padding: 20px;
-            border-left: 1px solid #ccc;
-            position: fixed;
-            right: 0;
-            height: 100vh;
-            overflow-y: auto;
-        }
-        .cart-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .cart-item span {
-            flex: 1;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-        }
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Targenia - Butik</title>
+<style>
+  body { font-family: Arial,sans-serif; background: #1f1f2e; color: #fff; margin:0; padding:0; }
+  header { background:#2c2c44; padding:20px; text-align:center; font-size:2em; font-weight:bold; }
+  main { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:20px; }
+  .product { background:#2c2c44; border-radius:12px; width:180px; padding:15px; text-align:center; }
+  .product img { width:100px; height:100px; object-fit:contain; margin-bottom:5px; }
+  .product button { background:#ff6b6b; border:none; color:#fff; padding:6px 10px; border-radius:6px; cursor:pointer; }
+  .product button:disabled { background:#555; cursor:not-allowed; }
+  #cart { position:fixed; right:20px; top:80px; width:300px; background:#2c2c44; padding:15px; border-radius:12px; max-height:80vh; overflow-y:auto; }
+  #cart h2 { margin-top:0; text-align:center; }
+  #cart ul { list-style:none; padding:0; }
+  #cart li { display:flex; justify-content:space-between; margin:6px 0; }
+  #cart li button { padding:2px 6px; }
+  form { display:flex; flex-direction:column; gap:8px; margin-top:15px; }
+  input, textarea, select, button { padding:6px; border-radius:6px; border:none; width:100%; }
+  button[type="submit"] { background:#1dd1a1; cursor:pointer; margin-top:8px; }
+</style>
 </head>
 <body>
-    <div class="products">
-        <h1>Targenia</h1>
-        <div id="product-list"></div>
-        <button id="checkout">Fortsätt till betalning</button>
-    </div>
-    <div class="cart">
-        <h2>Kundvagn</h2>
-        <div id="cart-items"></div>
-        <p>Total: <span id="total">0</span> D</p>
-    </div>
 
-    <!-- Modal -->
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Betalning</h2>
-            <form id="payment-form">
-                <label>Förnamn: <input type="text" name="fornamn" required></label><br>
-                <label>Efternamn: <input type="text" name="efternamn" required></label><br>
-                <label>Minecraft-användarnamn: <input type="text" name="mc_username" required></label><br>
-                <label>Adress: <input type="text" name="adress" required></label><br>
-                <label>Public Account Number: <input type="text" name="public_account" required></label><br>
-                <label>Secret Key: <input type="password" name="secret_key" required></label><br>
-                <label>Vill du ha hemleverans? <input type="checkbox" name="hemleverans"></label> (+10% av summan)<br>
-                <label>Expressleverans? <input type="checkbox" name="express"></label> (+20% av summan)<br>
-                <label>Anteckningar: <textarea name="anteckningar"></textarea></label><br>
-                <button type="submit">Skicka beställning</button>
-            </form>
-        </div>
-    </div>
+<header>Targenia</header>
 
-    <script>
-        const products = [
-            {name: "Bok", price: 5, unit: "D/Bok", img: "https://minecraft.wiki/images/Book_JE2_BE2.png"},
-            {name: "Koppel", price: 3, unit: "D/Stack", img: "https://minecraft.wiki/images/Lead_JE2_BE2.png"},
-            {name: "Namnskylt", price: 1, unit: "D/10Stycken", img: "https://minecraft.wiki/images/Name_Tag_JE2_BE2.png"},
-            {name: "Skölpaddsägg", price: 6, unit: "D/Ägg", img: "https://minecraft.wiki/images/Turtle_Egg_JE2_BE2.png"},
-            {name: "Respawn Anchor", price: 25, unit: "D/Styck", img: "https://minecraft.wiki/images/Respawn_Anchor_JE1.png"},
-            {name: "Elytra", price: 0, unit: "Ej Tillgänglig Att Köpa", img: "https://minecraft.wiki/images/Elytra_JE2_BE2.png"},
-            {name: "Adrians Fantastiska Fireworks", price: 8, unit: "D/Styck", img: "https://minecraft.wiki/images/Firework_Rocket_JE2_BE2.png"},
-            {name: "Nautilus skal", price: 9, unit: "D/Stack", img: "https://minecraft.wiki/images/Nautilus_Shell_JE1_BE2.png"},
-            {name: "Shulkerbox", price: 12, unit: "D/Styck", img: "https://minecraft.wiki/images/Shulker_Box_JE2.png"},
-            {name: "Spyglass", price: 3, unit: "D/Styck", img: "https://minecraft.wiki/images/Spyglass_JE1.png"},
-            {name: "Totem of Undying", price: 2, unit: "D/Styck", img: "https://minecraft.wiki/images/Totem_of_Undying_JE2_BE2.png"},
-            {name: "Ringklocka", price: 5, unit: "D/Stack", img: "https://minecraft.wiki/images/Bell_JE3.png"},
-            {name: "Dragons Breath", price: 8, unit: "D/Stack", img: "https://minecraft.wiki/images/Dragon%27s_Breath_JE1_BE1.png"},
-            {name: "Bone", price: 1, unit: "D/Stack", img: "https://minecraft.wiki/images/Bone_JE3_BE2.png"},
-            {name: "Kedja", price: 2, unit: "D/Stack", img: "https://minecraft.wiki/images/Chain_JE1_BE1.png"},
-            {name: "Tråd", price: 1, unit: "D/Stack", img: "https://minecraft.wiki/images/String_JE2_BE2.png"},
-            {name: "Spindelnät", price: 1, unit: "D/8Stycken", img: "https://minecraft.wiki/images/Cobweb_JE2_BE2.png"},
-            {name: "Magnetit", price: 16, unit: "D/Styck", img: "https://minecraft.wiki/images/Lodestone_JE1_BE1.png"},
-            {name: "Fiskespö", price: 5, unit: "D/Styck", img: "https://minecraft.wiki/images/Fishing_Rod_JE2_BE2.png"},
-            {name: "Pilbåge", price: 5, unit: "D/Styck", img: "https://minecraft.wiki/images/Bow_JE2_BE1.png"},
-            {name: "Beacon", price: 12, unit: "D/Styck", img: "https://minecraft.wiki/images/Beacon_JE7_BE2.png"},
-            {name: "Ender Kista", price: 6, unit: "D/Styck", img: "https://minecraft.wiki/images/Ender_Chest_JE2_BE2.png"},
-            {name: "Guldtacka", price: 2, unit: "D/Stack", img: "https://minecraft.wiki/images/Gold_Ingot_JE4_BE2.png"},
-            {name: "Guld Block", price: 14, unit: "D/Stack", img: "https://minecraft.wiki/images/Gold_Block_JE4_BE3.png"},
-            {name: "Järn", price: 1, unit: "D/Stack", img: "https://minecraft.wiki/images/Iron_Ingot_JE3_BE2.png"},
-            {name: "Järn Block", price: 5, unit: "D/Stack", img: "https://minecraft.wiki/images/Iron_Block_JE3_BE3.png"},
-            {name: "Smarald Block", price: 4, unit: "D/16St", img: "https://minecraft.wiki/images/Emerald_Block_JE4_BE3.png"},
-            {name: "Netherite", price: 12, unit: "D/St", img: "https://minecraft.wiki/images/Netherite_Ingot_JE1_BE1.png"}
-        ];
+<main id="products"></main>
 
-        let cart = [];
+<div id="cart">
+  <h2>Kundvagn</h2>
+  <ul id="cartList"></ul>
+  <form action="https://formspree.io/f/xykdddlz" method="POST" onsubmit="return sendOrder()">
+    <input type="hidden" name="Produkter" id="productsField">
 
-        function renderProducts() {
-            const list = document.getElementById('product-list');
-            list.innerHTML = '';
-            products.forEach((product, index) => {
-                const div = document.createElement('div');
-                div.classList.add('product');
-                div.innerHTML = `
-                    <img src="${product.img}" alt="${product.name}">
-                    <div class="product-info">
-                        <h3>${product.name}</h3>
-                        <p>Pris: ${product.price} ${product.unit}</p>
-                    </div>
-                    <button onclick="addToCart(${index})" ${product.price === 0 ? 'disabled' : ''}>Lägg till</button>
-                `;
-                list.appendChild(div);
-            });
-        }
+    <input name="Förnamn" placeholder="Förnamn" required>
+    <input name="Efternamn" placeholder="Efternamn" required>
+    <input name="Minecraft-namn" placeholder="Minecraft-namn" required>
+    <input name="Adress" placeholder="Adress" required>
+    <input name="Public Account" placeholder="Public Account Number" required>
+    <input name="Secret Key" placeholder="Secret Key" required>
 
-        function addToCart(index) {
-            const existing = cart.find(item => item.index === index);
-            if (existing) {
-                existing.quantity++;
-            } else {
-                cart.push({index, quantity: 1});
-            }
-            renderCart();
-        }
+    <label>Hemleverans (+10%) 
+      <select name="Hemleverans"><option value="Nej">Nej</option><option value="Ja">Ja</option></select>
+    </label>
+    <label>Expressleverans (+20%)
+      <select name="Expressleverans"><option value="Nej">Nej</option><option value="Ja">Ja</option></select>
+    </label>
 
-        function removeFromCart(index) {
-            const item = cart.find(item => item.index === index);
-            if (item) {
-                item.quantity--;
-                if (item.quantity <= 0) {
-                    cart = cart.filter(i => i.index !== index);
-                }
-            }
-            renderCart();
-        }
+    <textarea name="Anteckningar" placeholder="Anteckningar (valfritt)"></textarea>
+    <button type="submit">Beställ</button>
+  </form>
+</div>
 
-        function renderCart() {
-            const itemsDiv = document.getElementById('cart-items');
-            itemsDiv.innerHTML = '';
-            let total = 0;
-            cart.forEach(item => {
-                const product = products[item.index];
-                total += product.price * item.quantity;
-                const div = document.createElement('div');
-                div.classList.add('cart-item');
-                div.innerHTML = `
-                    <span>${product.name} x ${item.quantity}</span>
-                    <button onclick="removeFromCart(${item.index})">-</button>
-                `;
-                itemsDiv.appendChild(div);
-            });
-            document.getElementById('total').textContent = total;
-        }
+<script>
+const products = [
+  { name: "Bok", price: 5, unit: "D/Bok", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/87/Book_JE2.png" },
+  { name: "Koppel", price: 3, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Lead_JE2.png" },
+  { name: "Namnskylt", price: 1, unit: "D/10Stycken", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1f/Name_Tag_JE2.png" },
+  { name: "Sköldpaddsägg", price: 6, unit: "D/Ägg", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Turtle_Egg_JE2.png" },
+  { name: "Respawn Anchor", price: 25, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/0b/Respawn_Anchor_JE2.png" },
+  { name: "Elytra", price: 0, unit: "Ej Tillgänglig Att Köpa", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/c2/Elytra_JE2.png" },
+  { name: "Adrians Fantastiska Fireworks", price: 8, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/19/Firework_Rocket_JE2.png" },
+  { name: "Nautilus skal", price: 9, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Nautilus_Shell_JE2.png" },
+  { name: "Shulkerbox", price: 12, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/55/Shulker_Box_JE2.png" }
+];
 
-        // Modal
-        const modal = document.getElementById('myModal');
-        const btn = document.getElementById('checkout');
-        const span = document.getElementsByClassName('close')[0];
+const cart = {};
+const productsDiv = document.getElementById("products");
+const cartList = document.getElementById("cartList");
 
-        btn.onclick = function() {
-            if (cart.length > 0) {
-                modal.style.display = 'block';
-            } else {
-                alert('Kundvagnen är tom!');
-            }
-        }
+// Render produkter
+function renderProducts() {
+  productsDiv.innerHTML = "";
+  products.forEach((p, i) => {
+    const disabled = p.unit.includes("Ej");
+    const div = document.createElement("div");
+    div.className = "product";
+    div.innerHTML = `
+      <img src="${p.img}" alt="${p.name}">
+      <h4>${p.name}</h4>
+      <p>${p.price} ${p.unit}</p>
+      <button ${disabled ? "disabled" : ""} onclick="addToCart(${i})">
+        ${disabled ? "Ej tillgänglig" : "Lägg till i kundvagn"}
+      </button>
+    `;
+    productsDiv.appendChild(div);
+  });
+}
 
-        span.onclick = function() {
-            modal.style.display = 'none';
-        }
+// Lägg till i kundvagn
+function addToCart(i){
+  const p = products[i];
+  if(!cart[p.name]) cart[p.name]=1;
+  else if(cart[p.name]<15) cart[p.name]++;
+  updateCart();
+}
 
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
-        }
+// Uppdatera kundvagn
+function updateCart(){
+  cartList.innerHTML="";
+  Object.keys(cart).forEach(k=>{
+    const li=document.createElement("li");
+    li.innerHTML=`${k} (${cart[k]} st) <button onclick="changeQty('${k}',-1)">-</button><button onclick="changeQty('${k}',1)">+</button>`;
+    cartList.appendChild(li);
+  });
+}
 
-        // Form submit
-        const form = document.getElementById('payment-form');
-        form.onsubmit = async function(e) {
-            e.preventDefault();
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData);
-            let total = parseInt(document.getElementById('total').textContent);
-            if (data.hemleverans) total += total * 0.1;
-            if (data.express) total += total * 0.2;
-            data.total = total;
-            data.products = cart.map(item => ({
-                name: products[item.index].name,
-                quantity: item.quantity,
-                price: products[item.index].price
-            }));
+// Ändra antal
+function changeQty(name, delta){
+  cart[name]+=delta;
+  if(cart[name]<1) cart[name]=1;
+  if(cart[name]>15) cart[name]=15;
+  updateCart();
+}
 
-            // Supabase
-            const supabaseUrl = 'DIN_SUPABASE_URL'; // Ersätt med din Supabase URL
-            const supabaseKey = 'DIN_ANON_KEY'; // Ersätt med din anon key
-            const supabase = createClient(supabaseUrl, supabaseKey);
+// Skicka till Formspree
+function sendOrder(){
+  const cartItems = Object.keys(cart).map(k => `${k} (${cart[k]} st)`);
+  document.getElementById("productsField").value = cartItems.join(", ");
+  return true; // submit form
+}
 
-            const { error } = await supabase
-                .from('orders')
-                .insert([data]);
+// Init
+renderProducts();
+</script>
 
-            if (error) {
-                alert('Fel vid skickning: ' + error.message);
-            } else {
-                alert('Beställning skickad!');
-                cart = [];
-                renderCart();
-                modal.style.display = 'none';
-            }
-        }
-
-        renderProducts();
-    </script>
 </body>
 </html>
