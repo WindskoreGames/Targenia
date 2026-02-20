@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Targenia Bank</title>
+<style>
+body { font-family: Arial; background:#f0f2f5; padding:20px; }
+.container { max-width:500px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
+input, button { width:100%; padding:10px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
+button { background:#4CAF50; color:white; border:none; cursor:pointer; }
+button:hover { background:#45a049; }
+</style>
+</head>
+<body>
+<div class="container">
+<h2>Targenia Bank</h2>
+
+<!-- Logga in -->
+<div id="loginDiv">
+  <input id="pub" placeholder="Public Account Number">
+  <input id="secret" placeholder="Secret Key">
+  <button id="loginButton">Logga in</button>
+</div>
+
+<!-- Konto info -->
+<div id="accountDiv" style="display:none;">
+  <h3>Ditt saldo: <span id="balance">0</span> kr</h3>
+  <p>Ditt kontonummer: <span id="pubNumber"></span></p>
+
+  <h4>Skicka pengar</h4>
+  <input id="toPub" placeholder="Mottagarens Public Account Number">
+  <input id="amount" type="number" placeholder="Belopp">
+  <button id="sendButton">Skicka</button>
+
+  <h4>Senaste transaktioner</h4>
+  <ul id="transactions"></ul>
+</div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const supabase = createClient(
+  "https://bglqhlxtvlazssnmiqhn.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnbHFobHh0dmxhenNzbm1pcWhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MTUxMTksImV4cCI6MjA4NjI5MTExOX0.PNNzFfsoB4VTm4fCH_6Yi-yFnIdRzgFKXo-vaf76njg"
+);
+
+let currentAccount = null;
+
+// ---------- LOGIN ----------
+async function login() {
+  const pub = document.getElementById('pub').value;
+  const secret = document.getElementById('secret').value;
+
+  const { data, error } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('public_account_number', pub)
+    .eq('secret_key', secret)
+    .single();
+
+  if (error) {
+    alert('Felaktigt konto eller hemlig nyckel!');
+    return;
+  }
+
+  currentAccount = data;
+  document.getElementById('loginDiv').style.display = 'none';
+  document.getElementById('accountDiv').style.display = 'block';
+  document.getElementById('balance').innerText = currentAccount.balance;
+  document.getElementById('pubNumber').innerText = currentAccount.public_account_number;
+
+  loadTransactions();
+}
+
+// ---------- SKICKA PENGAR ----------
+async function sendMoney() {
+  const toPub = document.getElementById('toPub').value;
+  let amount = parseInt(document.getElementById('amount').value);
+
+  // Validera belopp
+  if (isNaN(amount) || amount <= 0) {
+    alert('Belopp måste vara ett positivt tal!');
+    return;
+  }
+
+  // Validera att man inte skickar pengar till sig själv
+  if (toPub === currentAccount.public_account_number) {
+    alert('Du kan inte skicka pengar till dig själv!');
+    return;
+  }
+
+  const { error } = await supabase.rpc('transfer_money', {
+    sender_public: currentAccount.public_account_number,
+    sender_secret: currentAccount.secret_key,
+    receiver_public: toPub,
+    amount: amount
+  });
+
+  if (error) {
+    alert('Fel: ' + error.message);
+  } else {
+    alert('Överföring klar!');
+
+    // Uppdatera saldo
+    const { data } = await supabase
+      .from('accounts')
+      .select('balance')
+      .eq('id', currentAccount.id)
+      .single();
+
+    currentAccount.balance = data.balance;
+    document.getElementById('balance').innerText = currentAccount.balance;
+
+    loadTransactions();
+  }
+}
+
+// ---------- SENASTE TRANSAKTIONER ----------
+async function loadTransactions() {
+  const { data } = await supabase
+    .from('transactions')
+    .select('*')
+    .or(`from_account.eq.${currentAccount.id},to_account.eq.${currentAccount.id}`)
+    .order('created_at', { ascending:false })
+    .limit(10);
+
+  const list = document.getElementById('transactions');
+  list.innerHTML = '';
+  data.forEach(tx => {
+    list.innerHTML += `<li>${tx.from_account === currentAccount.id ? 'Till' : 'Från'}: ${tx.amount} kr</li>`;
+  });
+}
+
+// ---------- LÄGG TILL EVENTLISTENERS FÖR KNAPPAR ----------
+document.getElementById('loginButton').addEventListener('click', login);
+document.getElementById('sendButton').addEventListener('click', sendMoney);
+</script>
+</body>
+</html>
