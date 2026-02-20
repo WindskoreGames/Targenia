@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Targenia - Butik</title>
 <style>
-  body { font-family: Arial,sans-serif; background: #1f1f2e; color: #fff; margin:0; padding:0; }
+  body { font-family: Arial,sans-serif; background:#1f1f2e; color:#fff; margin:0; padding:0; }
   header { background:#2c2c44; padding:20px; text-align:center; font-size:2em; font-weight:bold; }
   main { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:20px; }
   .product { background:#2c2c44; border-radius:12px; width:180px; padding:15px; text-align:center; }
@@ -17,9 +17,7 @@
   #cart ul { list-style:none; padding:0; }
   #cart li { display:flex; justify-content:space-between; margin:6px 0; }
   #cart li button { padding:2px 6px; }
-  form { display:flex; flex-direction:column; gap:8px; margin-top:15px; }
-  input, textarea, select, button { padding:6px; border-radius:6px; border:none; width:100%; }
-  button[type="submit"] { background:#1dd1a1; cursor:pointer; margin-top:8px; }
+  button#checkout { background:#1dd1a1; margin-top:8px; cursor:pointer; width:100%; border-radius:6px; border:none; padding:8px; }
 </style>
 </head>
 <body>
@@ -31,58 +29,58 @@
 <div id="cart">
   <h2>Kundvagn</h2>
   <ul id="cartList"></ul>
-  <form action="https://formspree.io/f/xykdddlz" method="POST" onsubmit="return sendOrder()">
-    <input type="hidden" name="Produkter" id="productsField">
-
-    <input name="Förnamn" placeholder="Förnamn" required>
-    <input name="Efternamn" placeholder="Efternamn" required>
-    <input name="Minecraft-namn" placeholder="Minecraft-namn" required>
-    <input name="Adress" placeholder="Adress" required>
-    <input name="Public Account" placeholder="Public Account Number" required>
-    <input name="Secret Key" placeholder="Secret Key" required>
-
-    <label>Hemleverans (+10%) 
-      <select name="Hemleverans"><option value="Nej">Nej</option><option value="Ja">Ja</option></select>
-    </label>
-    <label>Expressleverans (+20%)
-      <select name="Expressleverans"><option value="Nej">Nej</option><option value="Ja">Ja</option></select>
-    </label>
-
-    <textarea name="Anteckningar" placeholder="Anteckningar (valfritt)"></textarea>
-    <button type="submit">Beställ</button>
-  </form>
+  <button id="checkout" onclick="goToCheckout()">Till kassan</button>
 </div>
 
 <script>
+// 🛍️ Alla produkter
 const products = [
-  { name: "Bok", price: 5, unit: "D/Bok", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/87/Book_JE2.png" },
-  { name: "Koppel", price: 3, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Lead_JE2.png" },
-  { name: "Namnskylt", price: 1, unit: "D/10Stycken", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1f/Name_Tag_JE2.png" },
-  { name: "Sköldpaddsägg", price: 6, unit: "D/Ägg", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Turtle_Egg_JE2.png" },
-  { name: "Respawn Anchor", price: 25, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/0b/Respawn_Anchor_JE2.png" },
-  { name: "Elytra", price: 0, unit: "Ej Tillgänglig Att Köpa", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/c2/Elytra_JE2.png" },
-  { name: "Adrians Fantastiska Fireworks", price: 8, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/19/Firework_Rocket_JE2.png" },
-  { name: "Nautilus skal", price: 9, unit: "D/Stack", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Nautilus_Shell_JE2.png" },
-  { name: "Shulkerbox", price: 12, unit: "D/Styck", img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/55/Shulker_Box_JE2.png" }
+  { name:"Bok", price:5, unit:"D/Bok", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/87/Book_JE2.png" },
+  { name:"Koppel", price:3, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Lead_JE2.png" },
+  { name:"Namnskylt", price:1, unit:"D/10Stycken", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/1f/Name_Tag_JE2.png" },
+  { name:"Sköldpaddsägg", price:6, unit:"D/Ägg", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Turtle_Egg_JE2.png" },
+  { name:"Respawn Anchor", price:25, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/0b/Respawn_Anchor_JE2.png" },
+  { name:"Elytra", price:0, unit:"Ej Tillgänglig", disabled:true, img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/c2/Elytra_JE2.png" },
+  { name:"Adrians Fantastiska Fireworks", price:8, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/1/19/Firework_Rocket_JE2.png" },
+  { name:"Nautilus skal", price:9, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/d/d1/Nautilus_Shell_JE2.png" },
+  { name:"Shulkerbox", price:12, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/55/Shulker_Box_JE2.png" },
+  { name:"Spyglass", price:3, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/64/Spyglass_JE2.png" },
+  { name:"Totem of Undying", price:2, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f6/Totem_of_Undying_JE2.png" },
+  { name:"Ringklocka", price:5, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5e/Bell_JE2.png" },
+  { name:"Dragons Breath", price:8, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/c/cd/Dragon%27s_Breath_JE2.png" },
+  { name:"Ben", price:1, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/03/Bone_JE2.png" },
+  { name:"Kedja", price:2, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/66/Chain_JE2.png" },
+  { name:"Tråd", price:1, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/84/String_JE2.png" },
+  { name:"Spindelnät", price:1, unit:"D/8Stycken", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9b/Cobweb_JE2.png" },
+  { name:"Magnetit", price:16, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/e/e2/Block_of_Magnetite_JE2.png" },
+  { name:"Fiskespö", price:5, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/f0/Fishing_Rod_JE2.png" },
+  { name:"Pilbåge", price:5, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/7/7e/Bow_JE2.png" },
+  { name:"Beacon", price:12, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/51/Beacon_JE2.png" },
+  { name:"Ender Kista", price:6, unit:"D/Styck", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8c/Ender_Chest_JE2.png" },
+  { name:"Guldtacka", price:2, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/3e/Gold_Ingot_JE2.png" },
+  { name:"Guld Block", price:14, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/34/Block_of_Gold_JE2.png" },
+  { name:"Järn", price:1, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5b/Iron_Ingot_JE2.png" },
+  { name:"Järn Block", price:5, unit:"D/Stack", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/f/fd/Block_of_Iron_JE2.png" },
+  { name:"Smarald Block", price:4, unit:"D/16St", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/00/Block_of_Emerald_JE2.png" },
+  { name:"Netherite", price:12, unit:"D/St", img:"https://static.wikia.nocookie.net/minecraft_gamepedia/images/0/09/Netherite_Ingot_JE2.png" }
 ];
 
+// 🛒 Kundvagn
 const cart = {};
 const productsDiv = document.getElementById("products");
 const cartList = document.getElementById("cartList");
 
 // Render produkter
 function renderProducts() {
-  productsDiv.innerHTML = "";
-  products.forEach((p, i) => {
-    const disabled = p.unit.includes("Ej");
+  products.forEach((p,i)=>{
     const div = document.createElement("div");
-    div.className = "product";
-    div.innerHTML = `
+    div.className="product";
+    div.innerHTML=`
       <img src="${p.img}" alt="${p.name}">
       <h4>${p.name}</h4>
       <p>${p.price} ${p.unit}</p>
-      <button ${disabled ? "disabled" : ""} onclick="addToCart(${i})">
-        ${disabled ? "Ej tillgänglig" : "Lägg till i kundvagn"}
+      <button ${p.disabled?"disabled":""} onclick="addToCart(${i})">
+        ${p.disabled?"Ej tillgänglig":"Lägg till i kundvagn"}
       </button>
     `;
     productsDiv.appendChild(div);
@@ -91,35 +89,44 @@ function renderProducts() {
 
 // Lägg till i kundvagn
 function addToCart(i){
-  const p = products[i];
-  if(!cart[p.name]) cart[p.name]=1;
-  else if(cart[p.name]<15) cart[p.name]++;
+  const p=products[i];
+  if(!cart[p.name]) cart[p.name]={qty:0, unit:p.unit};
+  if(cart[p.name].qty<15) cart[p.name].qty++;
   updateCart();
 }
 
 // Uppdatera kundvagn
 function updateCart(){
   cartList.innerHTML="";
-  Object.keys(cart).forEach(k=>{
+  Object.keys(cart).forEach(key=>{
+    const item=cart[key];
     const li=document.createElement("li");
-    li.innerHTML=`${k} (${cart[k]} st) <button onclick="changeQty('${k}',-1)">-</button><button onclick="changeQty('${k}',1)">+</button>`;
+    li.innerHTML=`
+      ${key} (${item.qty} ${item.unit})
+      <button onclick="changeQty('${key}',-1)">-</button>
+      <button onclick="changeQty('${key}',1)">+</button>
+    `;
     cartList.appendChild(li);
   });
 }
 
 // Ändra antal
-function changeQty(name, delta){
-  cart[name]+=delta;
-  if(cart[name]<1) cart[name]=1;
-  if(cart[name]>15) cart[name]=15;
+function changeQty(name,delta){
+  cart[name].qty=Math.max(1, cart[name].qty+delta);
+  if(cart[name].qty>15) cart[name].qty=15;
   updateCart();
 }
 
-// Skicka till Formspree
-function sendOrder(){
-  const cartItems = Object.keys(cart).map(k => `${k} (${cart[k]} st)`);
-  document.getElementById("productsField").value = cartItems.join(", ");
-  return true; // submit form
+// Skicka till Google Form
+function goToCheckout(){
+  if(Object.keys(cart).length===0){
+    alert("Din kundvagn är tom!");
+    return;
+  }
+  const cartItems=Object.keys(cart).map(k=>`${k} (${cart[k].qty} ${cart[k].unit})`).join(", ");
+  const formID="entry.223413538"; // Google Form-fält för produkter
+  const formURL=`https://docs.google.com/forms/d/e/1FAIpQLSdugl-7Ob1Au-Ggs0l4LooD-mcpaIaLVl3wVlfR21WqKdAUfA/viewform?usp=pp_url&${formID}=${encodeURIComponent(cartItems)}`;
+  window.open(formURL,"_blank");
 }
 
 // Init
