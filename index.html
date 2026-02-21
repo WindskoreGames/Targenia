@@ -7,6 +7,7 @@
 <style>
   body { font-family: Arial,sans-serif; background:#1f1f2e; color:#fff; margin:0; padding:0; }
   header { background:#2c2c44; padding:20px; text-align:center; font-size:2em; font-weight:bold; }
+  header input { margin-top:10px; padding:6px; border-radius:6px; border:none; width:80%; font-size:1em; }
   main { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:20px; }
   .product { background:#2c2c44; border-radius:12px; width:180px; padding:15px; text-align:center; }
   .product img { width:100px; height:100px; object-fit:contain; margin-bottom:5px; }
@@ -22,7 +23,11 @@
 </head>
 <body>
 
-<header>Targenia</header>
+<header>
+  Targenia
+  <br>
+  <input type="text" id="search" placeholder="Sök produkter...">
+</header>
 
 <main id="products"></main>
 
@@ -32,213 +37,196 @@
   <button id="checkout" onclick="goToCheckout()">Till kassan</button>
 </div>
 
+<form id="gfForm" action="https://docs.google.com/forms/d/e/1FAIpQLSdugl-7Ob1Au-Ggs0l4LooD-mcpaIaLVl3wVlfR21WqKdAUfA/formResponse" method="GET" target="_blank" style="display:none;">
+  <input type="hidden" name="entry.223413538" id="gfProducts">
+</form>
+
 <script>
-// 🛍️ Alla produkter
+const IMG_ITEM  = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.1/assets/minecraft/textures/item/";
+const IMG_BLOCK = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.1/assets/minecraft/textures/block/";
+
 const products = [
-  // Redstone
-  { name:"Grut", price:4, unit:"D/Stack", img:"grut.png" },
-  { name:"Tratt", price:10, unit:"D/Stack", img:"tratt.png" },
-  { name:"Slime", price:10, unit:"D/Stack", img:"slime.png" },
-  { name:"Piston", price:10, unit:"D/Stack", img:"piston.png" },
-  { name:"Redstoneblock", price:10, unit:"D/Stack", img:"redstone_block.png" },
-  { name:"TNT", price:8, unit:"D/Stack", img:"tnt.png" },
-  { name:"Dispenser", price:4, unit:"D/8st", img:"dispenser.png" },
-  { name:"Dropper", price:4, unit:"D/8st", img:"dropper.png" },
-  { name:"Tågspår", price:2, unit:"D/Stack", img:"rail.png" },
-  { name:"Krafträls", price:4, unit:"D/Stack", img:"powered_rail.png" },
-  { name:"Redstonerepeterare", price:4, unit:"D/32st", img:"repeater.png" },
-  { name:"Redstonejämförare", price:8, unit:"D/st", img:"comparator.png" },
+  // REDSTONE
+  { name:"Grut", price:4, unit:"D/Stack", img: IMG_BLOCK+"gravel.png" },
+  { name:"Tratt", price:10, unit:"D/Stack", img: IMG_ITEM+"hopper.png" },
+  { name:"Slime", price:10, unit:"D/Stack", img: IMG_ITEM+"slime_ball.png" },
+  { name:"Piston", price:10, unit:"D/Stack", img: IMG_BLOCK+"piston.png" },
+  { name:"Redstoneblock", price:10, unit:"D/Stack", img: IMG_BLOCK+"redstone_block.png" },
+  { name:"TNT", price:8, unit:"D/Stack", img: IMG_BLOCK+"tnt.png" },
+  { name:"Dispenser", price:4, unit:"D/8st", img: IMG_BLOCK+"dispenser.png" },
+  { name:"Dropper", price:4, unit:"D/8st", img: IMG_BLOCK+"dropper.png" },
+  { name:"Redstonerepeterare", price:4, unit:"D/32st", img: IMG_ITEM+"repeater.png" },
+  { name:"Redstonejämförare", price:8, unit:"D/st", img: IMG_ITEM+"comparator.png" },
 
-  // Betong (alla färger)
-  { name:"Betong Vit", price:14, unit:"D/Stack", img:"white_concrete.png" },
-  { name:"Betong Ljusgrå", price:14, unit:"D/Stack", img:"light_gray_concrete.png" },
-  { name:"Betong Grå", price:14, unit:"D/Stack", img:"gray_concrete.png" },
-  { name:"Betong Svart", price:14, unit:"D/Stack", img:"black_concrete.png" },
-  { name:"Betong Brun", price:14, unit:"D/Stack", img:"brown_concrete.png" },
-  { name:"Betong Ljusblå", price:14, unit:"D/Stack", img:"light_blue_concrete.png" },
-  { name:"Betong Turkos", price:14, unit:"D/Stack", img:"cyan_concrete.png" },
-  { name:"Betong Blå", price:14, unit:"D/Stack", img:"blue_concrete.png" },
-  { name:"Betong Gul", price:14, unit:"D/Stack", img:"yellow_concrete.png" },
-  { name:"Betong Orange", price:14, unit:"D/Stack", img:"orange_concrete.png" },
-  { name:"Betong Röd", price:14, unit:"D/Stack", img:"red_concrete.png" },
-  { name:"Betong Lime", price:14, unit:"D/Stack", img:"lime_concrete.png" },
-  { name:"Betong Grön", price:14, unit:"D/Stack", img:"green_concrete.png" },
-  { name:"Betong Rosa", price:14, unit:"D/Stack", img:"pink_concrete.png" },
-  { name:"Betong Ljuslila", price:14, unit:"D/Stack", img:"light_purple_concrete.png" },
-  { name:"Betong Lila", price:14, unit:"D/Stack", img:"purple_concrete.png" },
+  // BETONG
+  { name:"Betong Vit", price:14, unit:"D/Stack", img: IMG_BLOCK+"white_concrete.png" },
+  { name:"Betong Ljusgrå", price:14, unit:"D/Stack", img: IMG_BLOCK+"light_gray_concrete.png" },
+  { name:"Betong Grå", price:14, unit:"D/Stack", img: IMG_BLOCK+"gray_concrete.png" },
+  { name:"Betong Svart", price:14, unit:"D/Stack", img: IMG_BLOCK+"black_concrete.png" },
+  { name:"Betong Brun", price:14, unit:"D/Stack", img: IMG_BLOCK+"brown_concrete.png" },
+  { name:"Betong Ljusblå", price:14, unit:"D/Stack", img: IMG_BLOCK+"light_blue_concrete.png" },
+  { name:"Betong Turkos", price:14, unit:"D/Stack", img: IMG_BLOCK+"cyan_concrete.png" },
+  { name:"Betong Blå", price:14, unit:"D/Stack", img: IMG_BLOCK+"blue_concrete.png" },
+  { name:"Betong Gul", price:14, unit:"D/Stack", img: IMG_BLOCK+"yellow_concrete.png" },
+  { name:"Betong Orange", price:14, unit:"D/Stack", img: IMG_BLOCK+"orange_concrete.png" },
+  { name:"Betong Röd", price:14, unit:"D/Stack", img: IMG_BLOCK+"red_concrete.png" },
+  { name:"Betong Lime", price:14, unit:"D/Stack", img: IMG_BLOCK+"lime_concrete.png" },
+  { name:"Betong Grön", price:14, unit:"D/Stack", img: IMG_BLOCK+"green_concrete.png" },
+  { name:"Betong Rosa", price:14, unit:"D/Stack", img: IMG_BLOCK+"pink_concrete.png" },
+  { name:"Betong Lila", price:14, unit:"D/Stack", img: IMG_BLOCK+"purple_concrete.png" },
 
-  // Trä
-  { name:"Trä Stammar", price:26, unit:"D/Stack", img:"logs.png" },
-  { name:"Trä Bark", price:26, unit:"D/Stack", img:"wood.png" },
-  { name:"Vitträ", price:26, unit:"D/Stack", img:"pale_oak_log.png" },
+  // TRÄ
+  { name:"Trä Stammar (Vänligen skriv på anteckningar vilken sort du vill ha.)", price:26, unit:"D/Stack", img: IMG_BLOCK+"oak_log.png" },
+  { name:"Vitträ", price:26, unit:"D/Stack", img: IMG_BLOCK+"birch_log" },
 
-  // Lampor
-  { name:"Lyktor", price:64, unit:"D/Stack", img:"lantern.png" },
-  { name:"Kedja", price:2, unit:"D/Stack", img:"chain.png" },
-  { name:"Redstone Lampa", price:14, unit:"D/Stack", img:"redstone_lamp.png" },
-  { name:"Glödsten", price:32, unit:"D/Stack", img:"glowstone.png" },
+  // LAMPOR
+  { name:"Lyktor", price:64, unit:"D/Stack", img: IMG_ITEM+"lantern.png" },
+  { name:"Kedja", price:2, unit:"D/Stack", img: IMG_BLOCK+"chain.png" },
+  { name:"Redstone Lampa", price:14, unit:"D/Stack", img: IMG_BLOCK+"redstone_lamp.png" },
+  { name:"Glödsten", price:32, unit:"D/Stack", img: IMG_BLOCK+"glowstone.png" },
 
-  // Mat
-  { name:"Äpple", price:1, unit:"D/Stack", img:"apple.png" },
-  { name:"Guldäpple", price:32, unit:"D/2st", img:"golden_apple.png" },
-  { name:"Guld Morot", price:2, unit:"D/Stack", img:"golden_carrot.png" },
-  { name:"Morot", price:1, unit:"D/3Stacks", img:"carrot.png" },
-  { name:"Söta bär", price:2, unit:"D/Stack", img:"sweet_berries.png" },
-  { name:"Melon", price:1, unit:"D/Stack", img:"melon.png" },
-  { name:"Vete", price:4, unit:"D/Stack", img:"wheat.png" },
-  { name:"Bröd", price:1, unit:"D/Stack", img:"bread.png" },
-  { name:"Höbal", price:6, unit:"D/Stack", img:"hay_block.png" },
-  { name:"Kaka", price:2, unit:"D/4Stacks", img:"cake.png" },
-  { name:"Pumpapaj", price:1, unit:"D/Stack", img:"pumpkin_pie.png" },
-  { name:"Pumpa", price:1, unit:"D/Stack", img:"pumpkin.png" },
-  { name:"Bakad potatis", price:1, unit:"D/Stack", img:"baked_potato.png" },
-  { name:"Fårkött", price:1, unit:"D/Stack", img:"mutton.png" },
-  { name:"Kanin", price:10, unit:"D/Stack", img:"rabbit.png" },
-  { name:"Torsk", price:1, unit:"D/Stack", img:"cod.png" },
-  { name:"Kyckling", price:1, unit:"D/Stack", img:"chicken.png" },
-  { name:"Biff", price:2, unit:"D/Stack", img:"beef.png" },
-  { name:"Fläskkotlett", price:2, unit:"D/Stack", img:"porkchop.png" },
+  // MAT
+  { name:"Äpple", price:1, unit:"D/Stack", img: IMG_ITEM+"apple.png" },
+  { name:"Guldäpple", price:32, unit:"D/2st", img: IMG_ITEM+"golden_apple.png" },
+  { name:"Guld Morot", price:2, unit:"D/Stack", img: IMG_ITEM+"golden_carrot.png" },
+  { name:"Morot", price:1, unit:"D/3Stacks", img: IMG_ITEM+"carrot.png" },
+  { name:"Söta bär", price:2, unit:"D/Stack", img: IMG_ITEM+"sweet_berries.png" },
+  { name:"Melon", price:1, unit:"D/Stack", img: IMG_ITEM+"melon_slice.png" },
+  { name:"Vete", price:4, unit:"D/Stack", img: IMG_ITEM+"wheat.png" },
+  { name:"Bröd", price:1, unit:"D/Stack", img: IMG_ITEM+"bread.png" },
+  { name:"Höbal", price:6, unit:"D/Stack", img: IMG_BLOCK+"hay_block.png" },
+  { name:"Kaka", price:2, unit:"D/4Stacks", img: IMG_ITEM+"cake.png" },
+  { name:"Pumpapaj", price:1, unit:"D/Stack", img: IMG_ITEM+"pumpkin_pie.png" },
+  { name:"Bakad potatis", price:1, unit:"D/Stack", img: IMG_ITEM+"baked_potato.png" },
+  { name:"Fårkött", price:1, unit:"D/Stack", img: IMG_ITEM+"mutton.png" },
+  { name:"Kanin", price:10, unit:"D/Stack", img: IMG_ITEM+"rabbit.png" },
+  { name:"Torsk", price:1, unit:"D/Stack", img: IMG_ITEM+"cod.png" },
+  { name:"Kyckling", price:1, unit:"D/Stack", img: IMG_ITEM+"chicken.png" },
+  { name:"Biff", price:2, unit:"D/Stack", img: IMG_ITEM+"beef.png" },
+  { name:"Fläskkotlett", price:2, unit:"D/Stack", img: IMG_ITEM+"porkchop.png" },
 
-  // Färger & Ull
-  { name:"Färg Vit", price:12, unit:"D/Stack", img:"white_dye.png" },
-  { name:"Färg Ljusgrå", price:12, unit:"D/Stack", img:"light_gray_dye.png" },
-  { name:"Färg Grå", price:12, unit:"D/Stack", img:"gray_dye.png" },
-  { name:"Färg Svart", price:12, unit:"D/Stack", img:"black_dye.png" },
-  { name:"Färg Brun", price:12, unit:"D/Stack", img:"brown_dye.png" },
-  { name:"Färg Röd", price:12, unit:"D/Stack", img:"red_dye.png" },
-  { name:"Färg Orange", price:12, unit:"D/Stack", img:"orange_dye.png" },
-  { name:"Färg Gul", price:12, unit:"D/Stack", img:"yellow_dye.png" },
-  { name:"Färg Blå", price:12, unit:"D/Stack", img:"blue_dye.png" },
-  { name:"Färg Ljusblå", price:12, unit:"D/Stack", img:"light_blue_dye.png" },
-  { name:"Färg Turkos", price:12, unit:"D/Stack", img:"cyan_dye.png" },
-  { name:"Färg Lime", price:12, unit:"D/Stack", img:"lime_dye.png" },
-  { name:"Färg Grön", price:12, unit:"D/Stack", img:"green_dye.png" },
-  { name:"Färg Lila", price:12, unit:"D/Stack", img:"purple_dye.png" },
-  { name:"Färg Ljuslila", price:12, unit:"D/Stack", img:"light_purple_dye.png" },
-  { name:"Färg Rosa", price:12, unit:"D/Stack", img:"pink_dye.png" },
-  { name:"Ull Vit", price:12, unit:"D/Stack", img:"white_wool.png" },
-  { name:"Ull Ljusgrå", price:12, unit:"D/Stack", img:"light_gray_wool.png" },
-  { name:"Ull Grå", price:12, unit:"D/Stack", img:"gray_wool.png" },
-  { name:"Ull Svart", price:12, unit:"D/Stack", img:"black_wool.png" },
-  { name:"Ull Brun", price:12, unit:"D/Stack", img:"brown_wool.png" },
-  { name:"Ull Röd", price:12, unit:"D/Stack", img:"red_wool.png" },
-  { name:"Ull Orange", price:12, unit:"D/Stack", img:"orange_wool.png" },
-  { name:"Ull Gul", price:12, unit:"D/Stack", img:"yellow_wool.png" },
-  { name:"Ull Blå", price:12, unit:"D/Stack", img:"blue_wool.png" },
-  { name:"Ull Ljusblå", price:12, unit:"D/Stack", img:"light_blue_wool.png" },
-  { name:"Ull Turkos", price:12, unit:"D/Stack", img:"cyan_wool.png" },
-  { name:"Ull Lime", price:12, unit:"D/Stack", img:"lime_wool.png" },
-  { name:"Ull Grön", price:12, unit:"D/Stack", img:"green_wool.png" },
-  { name:"Ull Lila", price:12, unit:"D/Stack", img:"purple_wool.png" },
-  { name:"Ull Ljuslila", price:12, unit:"D/Stack", img:"light_purple_wool.png" },
-  { name:"Ull Rosa", price:12, unit:"D/Stack", img:"pink_wool.png" },
+  // FÄRGER & ULL
+  { name:"Färg Vit", price:12, unit:"D/Stack", img: IMG_ITEM+"white_dye.png" },
+  { name:"Färg Ljusgrå", price:12, unit:"D/Stack", img: IMG_ITEM+"light_gray_dye.png" },
+  { name:"Färg Grå", price:12, unit:"D/Stack", img: IMG_ITEM+"gray_dye.png" },
+  { name:"Färg Svart", price:12, unit:"D/Stack", img: IMG_ITEM+"black_dye.png" },
+  { name:"Färg Brun", price:12, unit:"D/Stack", img: IMG_ITEM+"brown_dye.png" },
+  { name:"Färg Röd", price:12, unit:"D/Stack", img: IMG_ITEM+"red_dye.png" },
+  { name:"Färg Orange", price:12, unit:"D/Stack", img: IMG_ITEM+"orange_dye.png" },
+  { name:"Färg Gul", price:12, unit:"D/Stack", img: IMG_ITEM+"yellow_dye.png" },
+  { name:"Färg Blå", price:12, unit:"D/Stack", img: IMG_ITEM+"blue_dye.png" },
+  { name:"Färg Ljusblå", price:12, unit:"D/Stack", img: IMG_ITEM+"light_blue_dye.png" },
+  { name:"Färg Turkos", price:12, unit:"D/Stack", img: IMG_ITEM+"cyan_dye.png" },
+  { name:"Färg Lime", price:12, unit:"D/Stack", img: IMG_ITEM+"lime_dye.png" },
+  { name:"Färg Grön", price:12, unit:"D/Stack", img: IMG_ITEM+"green_dye.png" },
+  { name:"Färg Lila", price:12, unit:"D/Stack", img: IMG_ITEM+"purple_dye.png" },
+  { name:"Färg Rosa", price:12, unit:"D/Stack", img: IMG_ITEM+"pink_dye.png" },
+  { name:"Ull Vit", price:12, unit:"D/Stack", img: IMG_BLOCK+"white_wool.png" },
+  { name:"Ull Ljusgrå", price:12, unit:"D/Stack", img: IMG_BLOCK+"light_gray_wool.png" },
+  { name:"Ull Grå", price:12, unit:"D/Stack", img: IMG_BLOCK+"gray_wool.png" },
+  { name:"Ull Svart", price:12, unit:"D/Stack", img: IMG_BLOCK+"black_wool.png" },
+  { name:"Ull Brun", price:12, unit:"D/Stack", img: IMG_BLOCK+"brown_wool.png" },
+  { name:"Ull Röd", price:12, unit:"D/Stack", img: IMG_BLOCK+"red_wool.png" },
+  { name:"Ull Orange", price:12, unit:"D/Stack", img: IMG_BLOCK+"orange_wool.png" },
+  { name:"Ull Gul", price:12, unit:"D/Stack", img: IMG_BLOCK+"yellow_wool.png" },
+  { name:"Ull Blå", price:12, unit:"D/Stack", img: IMG_BLOCK+"blue_wool.png" },
+  { name:"Ull Ljusblå", price:12, unit:"D/Stack", img: IMG_BLOCK+"light_blue_wool.png" },
+  { name:"Ull Turkos", price:12, unit:"D/Stack", img: IMG_BLOCK+"cyan_wool.png" },
+  { name:"Ull Lime", price:12, unit:"D/Stack", img: IMG_BLOCK+"lime_wool.png" },
+  { name:"Ull Grön", price:12, unit:"D/Stack", img: IMG_BLOCK+"green_wool.png" },
+  { name:"Ull Lila", price:12, unit:"D/Stack", img: IMG_BLOCK+"purple_wool.png" },
+  { name:"Ull Rosa", price:12, unit:"D/Stack", img: IMG_BLOCK+"pink_wool.png" },
 
-  // Värdesaker
-  { name:"Netherite", price:12, unit:"D/Stack", img:"netherite_ingot.png" },
-  { name:"Smaragdblock", price:2, unit:"D/16st", img:"block_of_emerald.png" },
-  { name:"Järn", price:1, unit:"D/Stack", img:"iron_ingot.png" },
-  { name:"Järnblock", price:6, unit:"D/Stack", img:"block_of_iron.png" },
-  { name:"Fyr", price:12, unit:"D/Styck", img:"beacon.png" },
-  { name:"Enderkista", price:6, unit:"D/Styck", img:"ender_chest.png" },
-  { name:"Guld", price:2, unit:"D/Stack", img:"gold_ingot.png" },
-  { name:"Guldblock", price:14, unit:"D/Stack", img:"block_of_gold.png" },
-  { name:"Pärlbåtsskal", price:32, unit:"D/Stack", img:"nautilus_shell.png" },
-  { name:"Shulkerbox", price:63, unit:"D/Styck", img:"shulker_box.png" },
-  { name:"Kikare", price:64, unit:"D/Styck", img:"spyglass.png" },
-  { name:"Odödlighetstotem", price:52, unit:"D/Stack", img:"totem_of_undying.png" },
-  { name:"Ringklocka", price:16, unit:"D/Stack", img:"bell.png" },
-  { name:"Koppel", price:10, unit:"D/Stack", img:"lead.png" },
-  { name:"Namnskylt", price:32, unit:"D/20st", img:"name_tag.png" },
-  { name:"Adrians Fantastiska Fireworkds", price:32, unit:"D/Styck", img:"firework_rocket.png" },
+  // VÄRDESAKER
+  { name:"Netherite", price:12, unit:"D/Stack", img: IMG_ITEM+"netherite_ingot.png" },
+  { name:"Smaragdblock", price:2, unit:"D/16st", img: IMG_BLOCK+"emerald_block.png" },
+  { name:"Järn", price:1, unit:"D/Stack", img: IMG_ITEM+"iron_ingot.png" },
+  { name:"Järnblock", price:6, unit:"D/Stack", img: IMG_BLOCK+"iron_block.png" },
+  { name:"Fyr", price:12, unit:"D/Styck", img: IMG_BLOCK+"beacon.png" },
+  { name:"Enderkista", price:6, unit:"D/Styck", img: IMG_BLOCK+"ender_chest.png" },
+  { name:"Guld", price:2, unit:"D/Stack", img: IMG_ITEM+"gold_ingot.png" },
+  { name:"Guldblock", price:14, unit:"D/Stack", img: IMG_BLOCK+"gold_block.png" },
+  { name:"Pärlbåtsskal", price:32, unit:"D/Stack", img: IMG_ITEM+"nautilus_shell.png" },
+  { name:"Shulkerbox", price:63, unit:"D/Styck", img: IMG_ITEM+"shulker_box.png" },
+  { name:"Kikare", price:64, unit:"D/Styck", img: IMG_ITEM+"spyglass.png" },
+  { name:"Odödlighetstotem", price:52, unit:"D/Stack", img: IMG_ITEM+"totem_of_undying.png" },
+  { name:"Koppel", price:10, unit:"D/Stack", img: IMG_ITEM+"lead.png" },
+  { name:"Namnskylt", price:32, unit:"D/20st", img: IMG_ITEM+"name_tag.png" },
+  { name:"Adrians Fantastiska Fireworks", price:32, unit:"D/Styck", img: IMG_ITEM+"firework_rocket.png" },
 
-  // Annat
-  { name:"Planter", price:1, unit:"D/Stack", img:"sapling.png" },
-  { name:"Kullersten", price:2, unit:"D/Stack", img:"cobblestone.png" },
-  { name:"Mossig Kullersten", price:2, unit:"D/Stack", img:"mossy_cobblestone.png" },
-  { name:"Grus", price:1, unit:"D/Stack", img:"gravel.png" },
-  { name:"Sand", price:4, unit:"D/Stack", img:"sand.png" },
-  { name:"Lera", price:4, unit:"D/Stack", img:"clay.png" },
-  { name:"Obsidian", price:6, unit:"D/Stack", img:"obsidian.png" },
-  { name:"Kolblock", price:16, unit:"D/Stack", img:"coal_block.png" },
-  { name:"Granit", price:2, unit:"D/Stack", img:"granite.png" },
-  { name:"Diorite", price:2, unit:"D/Stack", img:"diorite.png" },
-  { name:"Andesite", price:2, unit:"D/Stack", img:"andesite.png" },
-  { name:"Basalt", price:1, unit:"D/Stack", img:"basalt.png" },
-  { name:"Pilar", price:2, unit:"D/Stack", img:"arrow.png" },
-  { name:"Fiskespö", price:6, unit:"D/Styck", img:"fishing_rod.png" },
-  { name:"Pilbåge", price:20, unit:"D/Styck", img:"bow.png" },
-  { name:"Ben", price:16, unit:"D/Stack", img:"bone.png" },
-  { name:"Tråd", price:1, unit:"D/Stack", img:"string.png" },
-  { name:"Spindelnät", price:1, unit:"D/8st", img:"cobweb.png" },
-  { name:"Magnetit", price:16, unit:"D/Styck", img:"magnetite.png" }
+  // ANNAT
+  { name:"Planter", price:1, unit:"D/Stack", img: IMG_BLOCK+"oak_sapling.png" },
+  { name:"Kullersten", price:2, unit:"D/Stack", img: IMG_BLOCK+"cobblestone.png" },
+  { name:"Mossig Kullersten", price:2, unit:"D/Stack", img: IMG_BLOCK+"mossy_cobblestone.png" },
+  { name:"Grus", price:1, unit:"D/Stack", img: IMG_BLOCK+"gravel.png" },
+  { name:"Sand", price:4, unit:"D/Stack", img: IMG_BLOCK+"sand.png" },
+  { name:"Lera", price:4, unit:"D/Stack", img: IMG_BLOCK+"clay.png" },
+  { name:"Obsidian", price:6, unit:"D/Stack", img: IMG_BLOCK+"obsidian.png" },
+  { name:"Kolblock", price:16, unit:"D/Stack", img: IMG_BLOCK+"coal_block.png" },
+  { name:"Granit", price:2, unit:"D/Stack", img: IMG_BLOCK+"granite.png" },
+  { name:"Diorite", price:2, unit:"D/Stack", img: IMG_BLOCK+"diorite.png" },
+  { name:"Andesite", price:2, unit:"D/Stack", img: IMG_BLOCK+"andesite.png" },
+  { name:"Pilar", price:2, unit:"D/Stack", img: IMG_ITEM+"arrow.png" },
+  { name:"Fiskespö", price:6, unit:"D/Stack", img: IMG_ITEM+"fishing_rod.png" }
 ];
 
-// 🛒 Kundvagn
-const cart = {};
 const productsDiv = document.getElementById("products");
 const cartList = document.getElementById("cartList");
+let cart = {}; // Ändrat till objekt med counts
 
-// Render produkter
-function renderProducts() {
-  products.forEach((p,i)=>{
+function renderProducts(list) {
+  productsDiv.innerHTML = "";
+  list.forEach((p) => {
     const div = document.createElement("div");
-    div.className="product";
-    div.innerHTML=`
+    div.className = "product";
+    div.innerHTML = `
       <img src="${p.img}" alt="${p.name}">
-      <h4>${p.name}</h4>
+      <strong>${p.name}</strong>
       <p>${p.price} ${p.unit}</p>
-      <button ${p.disabled?"disabled":""} onclick="addToCart(${i})">
-        ${p.disabled?"Ej tillgänglig":"Lägg till i kundvagn"}
-      </button>
+      <button onclick="addToCart('${p.name}')">Lägg till i kundvagn</button>
     `;
     productsDiv.appendChild(div);
   });
 }
 
-// Lägg till i kundvagn
-function addToCart(i){
-  const p=products[i];
-  if(!cart[p.name]) cart[p.name]={qty:0, unit:p.unit};
-  if(cart[p.name].qty<15) cart[p.name].qty++;
+renderProducts(products);
+
+document.getElementById("search").addEventListener("input", () => {
+  const query = document.getElementById("search").value.toLowerCase();
+  const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+  renderProducts(filtered);
+});
+
+function addToCart(name) {
+  if(!cart[name]) cart[name] = 1;
+  else cart[name]++;
   updateCart();
 }
 
-// Uppdatera kundvagn
-function updateCart(){
-  cartList.innerHTML="";
-  Object.keys(cart).forEach(key=>{
-    const item=cart[key];
-    const li=document.createElement("li");
-    li.innerHTML=`
-      ${key} (${item.qty} ${item.unit})
-      <button onclick="changeQty('${key}',-1)">-</button>
-      <button onclick="changeQty('${key}',1)">+</button>
-    `;
+function updateCart() {
+  cartList.innerHTML = "";
+  Object.keys(cart).forEach((key) => {
+    const product = products.find(p => p.name === key);
+    const li = document.createElement("li");
+    li.innerHTML = `${key} (${cart[key]} ${product.unit}) - ${product.price}D <button onclick="removeFromCart('${key}')">❌</button>`;
     cartList.appendChild(li);
   });
 }
 
-// Ändra antal
-function changeQty(name,delta){
-  cart[name].qty=Math.max(1, cart[name].qty+delta);
-  if(cart[name].qty>50) cart[name].qty=50;
+function removeFromCart(name) {
+  delete cart[name];
   updateCart();
 }
 
-// Skicka till Google Form
-function goToCheckout(){
-  if(Object.keys(cart).length===0){
-    alert("Din kundvagn är tom!");
+function goToCheckout() {
+  if(Object.keys(cart).length === 0) {
+    alert("Kundvagnen är tom!");
     return;
   }
-  const cartItems=Object.keys(cart).map(k=>`${k} (${cart[k].qty} ${cart[k].unit})`).join(", ");
-  const formID="entry.223413538"; // Google Form-fält för produkter
-  const formURL=`https://docs.google.com/forms/d/e/1FAIpQLSdugl-7Ob1Au-Ggs0l4LooD-mcpaIaLVl3wVlfR21WqKdAUfA/viewform?usp=pp_url&${formID}=${encodeURIComponent(cartItems)}`;
-  window.open(formURL,"_blank");
+  const cartText = Object.keys(cart).map(k => `${k} (${cart[k]} ${products.find(p=>p.name===k).unit})`).join(", ");
+  document.getElementById("gfProducts").value = cartText;
+  document.getElementById("gfForm").submit();
 }
-
-// Init
-renderProducts();
 </script>
 
 </body>
