@@ -34,10 +34,10 @@
 <div id="cart">
   <h2>Kundvagn</h2>
   <ul id="cartList"></ul>
-  <button id="checkout" onclick="goToCheckout()">Till kassan</button>
+  <button id="checkout" type="button" onclick="goToCheckout()">Till kassan</button>
 </div>
 
-<form id="gfForm" action="https://docs.google.com/forms/d/e/1FAIpQLSdugl-7Ob1Au-Ggs0l4LooD-mcpaIaLVl3wVlfR21WqKdAUfA/formResponse" method="GET" target="_blank" style="display:none;">
+<form id="gfForm" action="https://docs.google.com/forms/d/e/1FAIpQLSdugl-7Ob1Au-Ggs0l4LooD-mcpaIaLVl3WqVlfR21WqKdAUfA/formResponse" method="GET" target="_blank" style="display:none;">
   <input type="hidden" name="entry.223413538" id="gfProducts">
 </form>
 
@@ -45,6 +45,15 @@
 const IMG_ITEM  = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.1/assets/minecraft/textures/item/";
 const IMG_BLOCK = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.1/assets/minecraft/textures/block/";
 
+// Funktion som körs när man klickar på "Till kassan"
+function goToCheckout() {
+  // Fyll hidden input med produkter (exempel, ändra efter din logik)
+  const products = []; // här ska du fylla arrayen med dina produkter
+  document.getElementById("gfProducts").value = products.join(", ");
+
+  // Skicka formuläret manuellt
+  document.getElementById("gfForm").submit();
+}
 const products = [
   // REDSTONE
   { name:"Grut", price:4, unit:"D/Stack", img: IMG_BLOCK+"gravel.png" },
