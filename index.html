@@ -13,6 +13,40 @@
   .product img { width:100px; height:100px; object-fit:contain; margin-bottom:5px; }
   .product button { background:#ff6b6b; border:none; color:#fff; padding:6px 10px; border-radius:6px; cursor:pointer; }
   .product button:disabled { background:#555; cursor:not-allowed; }
+.warning {
+  position: relative;
+  background: #e53935;
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1em;
+  gap: 10px;
+}
+
+.warning .triangle {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 18px solid white;
+  transform: rotate(180deg);
+}
+
+.warning .warning-text {
+  flex: 1;
+  text-align: center;
+}
+
+.warning .close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2em;
+  cursor: pointer;
+}
   #cart { position:fixed; right:20px; top:80px; width:300px; background:#2c2c44; padding:15px; border-radius:12px; max-height:80vh; overflow-y:auto; }
   #cart h2 { margin-top:0; text-align:center; }
   #cart ul { list-style:none; padding:0; }
@@ -22,6 +56,12 @@
 </style>
 </head>
 <body>
+
+<div class="warning" id="warningBanner">
+  <div class="triangle"></div>
+  <span class="warning-text">Beställningar är för närvarande avstängda – du kan inte beställa på sidan just nu.</span>
+  <button class="close-btn" onclick="document.getElementById('warningBanner').style.display='none'">✖</button>
+</div>
 
 <header>
   Targenia
@@ -160,84 +200,4 @@ const products = [
   { name:"Kikare", price:64, unit:"D/Styck", img: IMG_ITEM+"spyglass.png" },
   { name:"Odödlighetstotem", price:52, unit:"D/Stack", img: IMG_ITEM+"totem_of_undying.png" },
   { name:"Koppel", price:10, unit:"D/Stack", img: IMG_ITEM+"lead.png" },
-  { name:"Namnskylt", price:32, unit:"D/20st", img: IMG_ITEM+"name_tag.png" },
-  { name:"Adrians Fantastiska Fireworks", price:32, unit:"D/Styck", img: IMG_ITEM+"firework_rocket.png" },
-
-// ANNAT – priser +150%
-{ name:"Planter", price:3, unit:"D/Stack", img: IMG_BLOCK+"oak_sapling.png" },
-{ name:"Kullersten", price:5, unit:"D/Stack", img: IMG_BLOCK+"cobblestone.png" },
-{ name:"Mossig Kullersten", price:5, unit:"D/Stack", img: IMG_BLOCK+"mossy_cobblestone.png" },
-{ name:"Grus", price:3, unit:"D/Stack", img: IMG_BLOCK+"gravel.png" },
-{ name:"Sand", price:10, unit:"D/Stack", img: IMG_BLOCK+"sand.png" },
-{ name:"Lera", price:10, unit:"D/Stack", img: IMG_BLOCK+"clay.png" },
-{ name:"Obsidian", price:15, unit:"D/Stack", img: IMG_BLOCK+"obsidian.png" },
-{ name:"Kolblock", price:40, unit:"D/Stack", img: IMG_BLOCK+"coal_block.png" },
-{ name:"Granit", price:5, unit:"D/Stack", img: IMG_BLOCK+"granite.png" },
-{ name:"Diorite", price:5, unit:"D/Stack", img: IMG_BLOCK+"diorite.png" },
-{ name:"Andesite", price:5, unit:"D/Stack", img: IMG_BLOCK+"andesite.png" },
-{ name:"Pilar", price:5, unit:"D/Stack", img: IMG_ITEM+"arrow.png" },
-{ name:"Gräs", price:15, unit:"D/Stack", img: "Grass.png" },
-{ name:"Fiskespö", price:15, unit:"D/Stack", img: IMG_ITEM+"fishing_rod.png" }
-];
-
-const productsDiv = document.getElementById("products");
-const cartList = document.getElementById("cartList");
-let cart = {}; // Ändrat till objekt med counts
-
-function renderProducts(list) {
-  productsDiv.innerHTML = "";
-  list.forEach((p) => {
-    const div = document.createElement("div");
-    div.className = "product";
-    div.innerHTML = `
-      <img src="${p.img}" alt="${p.name}">
-      <strong>${p.name}</strong>
-      <p>${p.price} ${p.unit}</p>
-      <button onclick="addToCart('${p.name}')">Lägg till i kundvagn</button>
-    `;
-    productsDiv.appendChild(div);
-  });
-}
-
-renderProducts(products);
-
-document.getElementById("search").addEventListener("input", () => {
-  const query = document.getElementById("search").value.toLowerCase();
-  const filtered = products.filter(p => p.name.toLowerCase().includes(query));
-  renderProducts(filtered);
-});
-
-function addToCart(name) {
-  if(!cart[name]) cart[name] = 1;
-  else cart[name]++;
-  updateCart();
-}
-
-function updateCart() {
-  cartList.innerHTML = "";
-  Object.keys(cart).forEach((key) => {
-    const product = products.find(p => p.name === key);
-    const li = document.createElement("li");
-    li.innerHTML = `${key} (${cart[key]} ${product.unit}) - ${product.price}D <button onclick="removeFromCart('${key}')">❌</button>`;
-    cartList.appendChild(li);
-  });
-}
-
-function removeFromCart(name) {
-  delete cart[name];
-  updateCart();
-}
-
-function goToCheckout() {
-  if(Object.keys(cart).length === 0) {
-    alert("Kundvagnen är tom!");
-    return;
-  }
-  const cartText = Object.keys(cart).map(k => `${k} (${cart[k]} ${products.find(p=>p.name===k).unit})`).join(", ");
-  document.getElementById("gfProducts").value = cartText;
-  document.getElementById("gfForm").submit();
-}
-</script>
-
-</body>
-</html>
+  { name:"Namnskylt", pr
